@@ -1,0 +1,149 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+#Routetable entry in the public routetable in the management env for peering to the dev VPC
+  PeeringRoute1:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 10.1.0.0/16 #dev env VPC CIDR
+      RouteTableId:
+        Ref: RouteTableidpubman
+      VpcPeeringConnectionId:
+        Ref: VPCPeeringConnectionman2dev
+#Routetable entry in the private one routetable in the management env for peering to the dev VPC
+  PeeringRoute2:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 10.1.0.0/16   #dev vpc CIDR
+      RouteTableId:
+        Ref: RouteTableidpriman1
+      VpcPeeringConnectionId:
+        Ref: VPCPeeringConnectionman2dev
+#Routetable entry in the public routetable in the management env for peering to the dev VPC
+  PeeringRoute3:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 10.1.0.0/16   #dev vpc cidr
+      RouteTableId:
+        Ref: RouteTableidpriman2
+      VpcPeeringConnectionId:
+        Ref: VPCPeeringConnectionman2dev
+#Routetable entry in the public routetable in the development env for peering with the man vpc
+  PeeringRoute4:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 10.0.0.0/16  #man vpc cidr
+      RouteTableId:
+        Ref: RouteTableidpubdev
+      VpcPeeringConnectionId:
+        Ref: VPCPeeringConnectionman2dev
+#Routetable entry in the private routetable in the development env for peering with the man vpc
+  PeeringRoute5:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 10.0.0.0/16 #man VPC cidr
+      RouteTableId:
+        Ref: RouteTableidpridev
+      VpcPeeringConnectionId:
+        Ref: VPCPeeringConnectionman2dev
+#Routetable entry in the public routetable in the management env for peering with the prod vpc
+  PeeringRoute6:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 10.2.0.0/16 #prod Vpc cird
+      RouteTableId:
+        Ref: RouteTableidpubman
+      VpcPeeringConnectionId:
+        Ref: VPCPeeringConnectionman2prod
+#Routetable entry in the private one routetable in the manangement env for peering with the prod vpc
+  PeeringRoute7:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 10.2.0.0/16 #prod VPC cidr
+      RouteTableId:
+        Ref: RouteTableidpriman1
+      VpcPeeringConnectionId:
+        Ref: VPCPeeringConnectionman2prod
+#Routetable entry in the public routetable in the manangement env for peering with the prod vpc
+  PeeringRoute8:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 10.2.0.0/16   #prod VPC CIDR
+      RouteTableId:
+        Ref: RouteTableidpriman2
+      VpcPeeringConnectionId:
+        Ref: VPCPeeringConnectionman2prod
+#Routetable entry in the public routetable in the production env for peering with the man vpc
+  PeeringRoute9:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 10.0.0.0/16    #man VPC CIDR
+      RouteTableId:
+        Ref: RouteTableidpubprod
+      VpcPeeringConnectionId:
+        Ref: VPCPeeringConnectionman2prod
+#Routetable entry in the private one routetable in the production env for peering with the man vpc
+  PeeringRoute10:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 10.0.0.0/16   #man VPC CIDR
+      RouteTableId:
+        Ref: RouteTableidpriprod1
+      VpcPeeringConnectionId:
+        Ref: VPCPeeringConnectionman2prod
+#Routetable entry in the private two routetable in the production env for peering with the man vpc
+  PeeringRoute11:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 10.0.0.0/16   #man VPC CIDR
+      RouteTableId:
+        Ref: RouteTableidpriprod2
+      VpcPeeringConnectionId:
+        Ref: VPCPeeringConnectionman2prod
+  VPCPeeringConnectionman2dev:
+    Type: AWS::EC2::VPCPeeringConnection
+    Properties:
+      VpcId:
+        Ref: VPCidman
+      PeerVpcId:
+        Ref: VPCiddev
+  VPCPeeringConnectionman2prod:
+    Type: AWS::EC2::VPCPeeringConnection
+    Properties:
+      VpcId:
+        Ref: VPCidman
+      PeerVpcId:
+        Ref: VPCidprod
+Parameters:
+  VPCidprod:
+    Type: String
+    Description: vpc id
+  VPCidman:
+    Type: String
+    Description: vpc id
+  VPCiddev:
+    Type: String
+    Description: vpc id
+  RouteTableidpubman:
+    Type: String
+    Description: public rt id of management env
+  RouteTableidpriman1:
+    Type: String
+    Description: private rt id one of management env
+  RouteTableidpriman2:
+    Type: String
+    Description: private rt id two of management env
+  RouteTableidpubdev:
+    Type: String
+    Description: public rt of dev env
+  RouteTableidpridev:
+    Type: String
+    Description: private rt of dev env
+  RouteTableidpubprod:
+    Type: String
+    Description: public rt of prod env
+  RouteTableidpriprod1:
+    Type: String
+    Description: private rt one rt of prod env
+  RouteTableidpriprod2:
+    Type: String
+    Description: private rt two of prod env
