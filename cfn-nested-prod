@@ -1,0 +1,176 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  VPCprod:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL: 'https://s3.amazonaws.com/bucket location for your prod networking stack'
+      Parameters:
+        VPCCIDRprod: !Ref VPCCIDRprod
+        PublicSubnetCIDRprod: !Ref PublicSubnetCIDRprod
+        PrivateSubnetCIDRprod1: !Ref PrivateSubnetCIDRprod1
+        PrivateSubnetCIDRprod2: !Ref PrivateSubnetCIDRprod2
+        AvailabilityZone1: !Ref AvailabilityZone1
+        AvailabilityZone2: !Ref AvailabilityZone2
+        EnvType: !Ref EnvType
+        Tagname: !Ref Tagname
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 2b3a214e-908c-4b2b-8465-de10ac0e945f
+  EC2prod:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL: 'https://s3.amazonaws.com/bucket location for production resources stack'
+      Parameters:
+        KeyPairName: !Ref KeyPairName
+        SGpubmanidroot: !Ref SGpubmanidroot
+        SGprimanidroot: !Ref SGprimanidroot
+        subnetidpubprod: !GetAtt 
+          - VPCprod
+          - Outputs.PublicSubnetIDprod
+        subnetidpriprod1: !GetAtt 
+          - VPCprod
+          - Outputs.PrivateSubnetIDprod1
+        subnetidpriprod2: !GetAtt 
+          - VPCprod
+          - Outputs.PrivateSubnetIDprod2
+        VPCidprod: !GetAtt 
+          - VPCprod
+          - Outputs.VPCIDprod
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 36a4d02c-c67d-4b96-8ba5-92c9b2e960ab
+    DependsOn:
+      - VPCpeeringprod
+  VPCpeeringprod:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL: 'https://s3.amazonaws.com/aap-infra-debo/routes/routes-prod.yml'
+      Parameters:
+        VPCidmanpeer1: !Ref VPCidmanpeer1
+        VPCidprod: !GetAtt 
+          - VPCprod
+          - Outputs.VPCIDprod
+        RouteTableidpubmanpeer1: !Ref RouteTableidpubmanpeer1
+        RouteTableidpriman1peer1: !Ref RouteTableidpriman1peer1
+        RouteTableidpriman2peer1: !Ref RouteTableidpriman2peer1
+        RouteTableidpubprod: !GetAtt 
+          - VPCprod
+          - Outputs.RouteTableIDpubprod
+        RouteTableidpriprod1: !GetAtt 
+          - VPCprod
+          - Outputs.RouteTableIDpriprod1
+        RouteTableidpriprod2: !GetAtt 
+          - VPCprod
+          - Outputs.RouteTableIDpriprod2
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 473355d1-d871-4185-9713-897504213b3d
+    DependsOn:
+      - VPCprod
+Parameters:
+  VPCCIDRprod:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.0.0.0/16
+  PublicSubnetCIDRprod:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.0.1.0/24
+  PrivateSubnetCIDRprod1:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.0.0.0/24
+  PrivateSubnetCIDRprod2:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.0.2.0/24
+  AvailabilityZone1:
+    Type: 'AWS::EC2::AvailabilityZone::Name'
+    Description: Select AZ 1 for for subnet
+  AvailabilityZone2:
+    Type: 'AWS::EC2::AvailabilityZone::Name'
+    Description: Select AZ 2 for subnet
+  EnvType:
+    Description: ' This Block is for common tag work in value for all the resource'
+    Type: String
+    Default: aap production env
+  Tagname:
+    Description: Customer Name for reference tags
+    Type: String
+    Default: aap production env
+  KeyPairName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: 'AWS::EC2::KeyPair::KeyName'
+    ConstraintDescription: must be the name of an existing
+  VPCidmanpeer1:
+    Description: This the man VPC id for peering with the dev VPC
+    Type: String
+  RouteTableidpubmanpeer1:
+    Description: This is the RTid public id of Man vpc
+    Type: String    
+  RouteTableidpriman1peer1:
+    Description: This is the RTid priman1 id of Man vpc
+    Type: String    
+  RouteTableidpriman2peer1:
+    Description: This is the RTid priman2 id of Man vpc
+    Type: String 
+  SGpubmanidroot: 
+    Description: SG id public man
+    Type: String	
+  SGprimanidroot:
+    Description: SG id private man
+    Type: String	
+Outputs:
+  VPCIDprodstk:
+    Value: !GetAtt 
+          - VPCprod
+          - Outputs.VPCIDprod
+    Description: Perimeter VPC ID
+    Export:
+      Name: !Sub '${AWS::StackName}-VPCIDprodstk'
+  PrivateSubnetIDprod1stk:
+    Description: Private Subnet ID in Perimeter VPC
+    Value: !GetAtt 
+          - VPCprod
+          - Outputs.PrivateSubnetIDprod1
+    Export:
+      Name: !Sub '${AWS::StackName}-PrivateSubnetIDprod1stk'
+  PrivateSubnetIDprod2stk:
+    Description: Private Subnet ID in Perimeter VPC
+    Value: !GetAtt 
+          - VPCprod
+          - Outputs.PrivateSubnetIDprod2
+    Export:
+      Name: !Sub '${AWS::StackName}-PrivateSubnetIDprod2stk'
+  PublicSubnetIDprodstk:
+    Description: Public Subnet ID in Perimeter VPC
+    Value: !GetAtt 
+          - VPCprod
+          - Outputs.PublicSubnetIDprod
+    Export:
+      Name: !Sub '${AWS::StackName}-PublicSubnetIDprodstk'
+  RouteTableIDpubprodstk:
+    Description: Public Subnet ID in Perimeter VPC
+    Value: !GetAtt 
+          - VPCprod
+          - Outputs.RouteTableIDpubprod
+    Export:
+      Name: !Sub '${AWS::StackName}-RouteTableIDpubprodstk'
+  RouteTableIDpriprod1stk:
+    Description: Public Subnet ID in Perimeter VPC
+    Value: !GetAtt 
+          - VPCprod
+          - Outputs.RouteTableIDpriprod1 
+    Export:
+      Name: !Sub '${AWS::StackName}-RouteTableIDpriprod1stk'
+  RouteTableIDpriprod2stk:
+    Description: Public Subnet ID in Perimeter VPC
+    Value: !GetAtt 
+          - VPCprod
+          - Outputs.RouteTableIDpriprod2
+    Export:
+      Name: !Sub '${AWS::StackName}-RouteTableIDpriprod2stk'
