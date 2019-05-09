@@ -1,0 +1,216 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  VPCprod:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: !Ref VPCCIDRprod
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - _
+            - - !Ref EnvType
+              - VPC
+              - !Ref Tagname
+  PublicSubnetprod:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPCprod
+      CidrBlock: !Ref PublicSubnetCIDRprod
+      AvailabilityZone: !Ref AvailabilityZone1
+      MapPublicIpOnLaunch: 'true'
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - _
+            - - !Ref EnvType
+              - Pub
+              - Subnt
+              - AZ1
+              - !Ref Tagname
+  PrivateSubnetprod1:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPCprod
+      CidrBlock: !Ref PrivateSubnetCIDRprod1
+      AvailabilityZone: !Ref AvailabilityZone2
+      MapPublicIpOnLaunch: 'false'
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - _
+            - - !Ref EnvType
+              - Pub
+              - Subnt
+              - AZ2
+              - !Ref Tagname
+  PrivateSubnetprod2:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPCprod
+      CidrBlock: !Ref PrivateSubnetCIDRprod2
+      AvailabilityZone: !Ref AvailabilityZone2
+      MapPublicIpOnLaunch: 'false'
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - _
+            - - !Ref EnvType
+              - Pub
+              - Subnt
+              - AZ2
+              - !Ref Tagname 
+  InternetGateway:
+    Type: 'AWS::EC2::InternetGateway'
+    Properties: {}
+  GatewayAttachement:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      VpcId: !Ref VPCprod
+      InternetGatewayId: !Ref InternetGateway
+  PublicRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPCprod
+  PublicRoute:
+    DependsOn: GatewayAttachement
+    Type: 'AWS::EC2::Route'
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  PublicSubnetRouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref PublicSubnetprod
+      RouteTableId: !Ref PublicRouteTable
+  PrivateRouteTable1:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPCprod
+  PrivateRouteTable2:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPCprod
+  PrivateRoute1:
+    Type: 'AWS::EC2::Route'
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+  PrivateRoute2:
+    Type: 'AWS::EC2::Route'
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+  PrivateRouteTableAssociation1:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      SubnetId: !Ref PrivateSubnetprod1
+  PrivateRouteTableAssociation2:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      SubnetId: !Ref PrivateSubnetprod2
+  NatGateway:
+    Type: 'AWS::EC2::NatGateway'
+    Properties:
+      AllocationId: !GetAtt NatGatewayOneAttachment.AllocationId
+      SubnetId: !Ref PublicSubnetprod
+  NatGatewayOneAttachment:
+    Type: 'AWS::EC2::EIP'
+    DependsOn:
+      - GatewayAttachement
+    Properties:
+      Domain: vpc
+  S3Endpoint:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: '*'
+            Principal: '*'
+            Resource: '*'
+      RouteTableIds:
+        - !Ref PrivateRouteTable1
+        - !Ref PrivateRouteTable2
+      ServiceName: !Join 
+        - ''
+        - - com.amazonaws.
+          - Ref: 'AWS::Region'
+          - .s3
+      VpcId: !Ref VPCprod
+Parameters:
+  VPCCIDRprod:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.0.0.0/16
+  PublicSubnetCIDRprod:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.0.1.0/24
+  PrivateSubnetCIDRprod1:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.0.2.0/24
+  PrivateSubnetCIDRprod2:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.0.0.0/24
+  AvailabilityZone1:
+    Type: 'AWS::EC2::AvailabilityZone::Name'
+    Description: Select AZ 1 for for subnet
+  AvailabilityZone2:
+    Type: 'AWS::EC2::AvailabilityZone::Name'
+    Description: Select AZ 2 for subnet
+  EnvType:
+    Description: ' This Block is for common tag work in value for all the resource'
+    Type: String
+    Default: production  env
+  Tagname:
+    Description: Customer Name for reference tags
+    Type: String
+    Default: production env
+Outputs:
+  VPCIDprod:
+    Value: !Ref VPCprod
+    Description: Perimeter VPC ID
+    Export:
+      Name: !Sub '${AWS::StackName}-VPCIDprod'
+  PrivateSubnetIDprod1:
+    Description: Private Subnet ID in Perimeter VPC
+    Value: !Ref PrivateSubnetprod1
+    Export:
+      Name: !Sub '${AWS::StackName}-PrivateSubnetIDprod1'
+  PrivateSubnetIDprod2:
+    Description: Private Subnet ID in Perimeter VPC
+    Value: !Ref PrivateSubnetprod2
+    Export:
+      Name: !Sub '${AWS::StackName}-PrivateSubnetIDprod2'
+  PublicSubnetIDprod:
+    Description: Public Subnet ID in Perimeter VPC
+    Value: !Ref PublicSubnetprod
+    Export:
+      Name: !Sub '${AWS::StackName}-PublicSubnetIDprod'
+  RouteTableIDpubprod:
+    Description: Public Subnet ID in Perimeter VPC
+    Value: !Ref PublicRouteTable
+    Export:
+      Name: !Sub '${AWS::StackName}-RouteTableIDpubprod'
+  RouteTableIDpriprod1:
+    Description: Public Subnet ID in Perimeter VPC
+    Value: !Ref PrivateRouteTable1
+    Export:
+      Name: !Sub '${AWS::StackName}-RouteTableIDpriprod1'
+  RouteTableIDpriprod2:
+    Description: Public Subnet ID in Perimeter VPC
+    Value: !Ref PrivateRouteTable2
+    Export:
+      Name: !Sub '${AWS::StackName}-RouteTableIDpriprod2'
