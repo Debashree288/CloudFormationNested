@@ -1,0 +1,227 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  VPCdev:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL: 'https://s3.amazonaws.com/XXXXXXXXXX/"your bucket location for dev networking'
+      Parameters:
+        VPCCIDRdev: !Ref VPCCIDRdev
+        PublicSubnetCIDRdev: !Ref PublicSubnetCIDRdev
+        PrivateSubnetCIDRdev: !Ref PrivateSubnetCIDRdev
+        DBSubnetCIDR: !Ref DBSubnetCIDR
+        AvailabilityZone1: !Ref AvailabilityZone1
+        AvailabilityZone2: !Ref AvailabilityZone2
+        AvailabilityZone3: !Ref AvailabilityZone3
+        EnvType: !Ref EnvType
+        Tagname: !Ref Tagname
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 36073df6-c23a-4c7e-a4e3-fc37c83e1c16
+  EC2dev:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL: 'https://s3.amazonaws.com/XXXXXXXXXX/"your bucket location for dev resources'
+      Parameters:
+        KeyPairName: !Ref KeyPairName
+        DBName: !Ref DBName
+        DBUsername: !Ref DBUsername
+        DBPassword: !Ref DBPassword
+        DBClass: !Ref DBClass
+        DBAllocatedStorage: !Ref DBAllocatedStorage
+        SGpubmanidroot: !Ref SGpubmanidroot
+        SGprimanidroot: !Ref SGprimanidroot
+        subnetidpubdev: !GetAtt 
+          - VPCdev
+          - Outputs.PublicSubnetIDdev
+        subnetidpridev: !GetAtt 
+          - VPCdev
+          - Outputs.PrivateSubnetIDdev
+        DBSubnetid: !GetAtt 
+          - VPCdev
+          - Outputs.DBSubnetIDdev
+        VPCiddev: !GetAtt 
+          - VPCdev
+          - Outputs.VPCIDdev
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: e31063b9-0ef3-4cc1-a56f-2b56db618212
+    DependsOn:
+      - VPCpeeringdev
+  VPCpeeringdev:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL: 'https://s3.amazonaws.com/aap-infra-debo/routes/routes-dev.yml'
+      Parameters:
+        VPCidmanpeer: !Ref VPCidmanpeer        
+        VPCiddev: !GetAtt 
+          - VPCdev
+          - Outputs.VPCIDdev
+        RouteTableidpubmanpeer: !Ref RouteTableidpubmanpeer          
+        RouteTableidpriman1peer: !Ref RouteTableidpriman1peer 
+        RouteTableidpriman2peer: !Ref RouteTableidpriman2peer 
+        RouteTableidpubdev: !GetAtt 
+          - VPCdev
+          - Outputs.RouteTableIDpubdev
+        RouteTableidpridev: !GetAtt 
+          - VPCdev
+          - Outputs.RouteTableIDpridev
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 473355d1-d871-4185-9713-897504213b3d
+    DependsOn:
+      - VPCdev
+Parameters:
+  VPCCIDRdev:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'  
+    Type: String
+    Default: 10.0.0.0/16
+  PublicSubnetCIDRdev:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.0.1.0/24
+  PrivateSubnetCIDRdev:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.0.0.0/24
+  DBSubnetCIDR:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.0.3.0/24
+  AvailabilityZone1:
+    Type: 'AWS::EC2::AvailabilityZone::Name'
+    Description: Select AZ 1 for for subnet
+  AvailabilityZone2:
+    Type: 'AWS::EC2::AvailabilityZone::Name'
+    Description: Select AZ 2 for subnet
+  AvailabilityZone3:
+    Type: 'AWS::EC2::AvailabilityZone::Name'
+    Description: Select AZ 3 for subnet
+  EnvType:
+    Description: ' This Block is for common tag work in value for all the resource'
+    Type: String
+    Default: aap development env
+  Tagname:
+    Description: Customer Name for reference tags
+    Type: String
+    Default: aap development env
+  KeyPairName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: 'AWS::EC2::KeyPair::KeyName'
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+  DBName:
+    Default: MyDatabase
+    Description: The database name
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+  DBUsername:
+    Default: admin
+    NoEcho: 'true'
+    Description: The database admin account username
+    Type: String
+    MinLength: '1'
+    MaxLength: '16'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+  DBPassword:
+    Default: admin
+    NoEcho: 'true'
+    Description: The database admin account password
+    Type: String
+    MinLength: '1'
+    MaxLength: '41'
+    AllowedPattern: '[a-zA-Z0-9]*'
+    ConstraintDescription: must contain only alphanumeric characters.
+  DBClass:
+    Default: db.m1.small
+    Description: Database instance class
+    Type: String
+    AllowedValues:
+      - db.m1.small
+      - db.m1.large
+      - db.m1.xlarge
+      - db.m2.xlarge
+      - db.m2.2xlarge
+      - db.m2.4xlarge
+    ConstraintDescription: must select a valid database instance type.
+  DBAllocatedStorage:
+    Default: '5'
+    Description: The size of the database (Gb)
+    Type: Number
+    MinValue: '5'
+    MaxValue: '1024'
+    ConstraintDescription: must be between 5 and 1024Gb.
+  VPCidmanpeer:
+    Description: This the man VPC id for peering with the dev VPC
+    Type: String
+  RouteTableidpubmanpeer:
+    Description: This is the RTid public id of Man vpc
+    Type: String
+  RouteTableidpriman1peer:
+    Description: This is the RTid priman1 id of Man vpc
+    Type: String
+  RouteTableidpriman2peer:
+    Description: This is the RTid priman2 id of Man vpc 
+    Type: String
+  SGpubmanidroot: 
+    Description: SG id public man
+    Type: String	
+  SGprimanidroot:
+    Description: SG id private man
+    Type: String
+Outputs:
+  VPCIDdevstk:
+    Value: !GetAtt 
+          - VPCdev
+          - Outputs.VPCIDdev
+    Description: Perimeter VPC ID
+    Export:
+      Name: !Sub '${AWS::StackName}-VPCIDdevstk'
+  PrivateSubnetIDdevstk:
+    Description: Private Subnet ID in Perimeter VPC
+    Value: !GetAtt 
+          - VPCdev
+          - Outputs.PrivateSubnetIDdev
+    Export:
+      Name: !Sub '${AWS::StackName}-PrivateSubnetIDdevstk'
+  PublicSubnetIDdevstk:
+    Description: Public Subnet ID in Perimeter VPC
+    Value: !GetAtt 
+          - VPCdev
+          - Outputs.PublicSubnetIDdev
+    Export:
+      Name: !Sub '${AWS::StackName}-PublicSubnetIDdevstk'
+  RouteTableIDpubdevstk:
+    Description: Public Subnet ID in Perimeter VPC
+    Value: !GetAtt 
+          - VPCdev
+          - Outputs.RouteTableIDpubdev
+    Export:
+      Name: !Sub '${AWS::StackName}-RouteTableIDpubdevstk'
+  RouteTableIDpridevstk:
+    Description: Public Subnet ID in Perimeter VPC
+    Value: !GetAtt 
+          - VPCdev
+          - Outputs.RouteTableIDpridev
+    Export:
+      Name: !Sub '${AWS::StackName}-RouteTableIDpridevstk'
+  SGdevpubidstk:
+    Description: SG of public instance in development resources
+    Value: !GetAtt 
+          - EC2dev
+          - Outputs.SGdevpubid
+    Export:
+      Name: !Sub '${AWS::StackName}-SGdevpubidstk'
+  SGdevpriidstk:
+    Description: SG of public instance in development resources
+    Value: !GetAtt 
+          - EC2dev
+          - Outputs.SGdevpriid
+    Export:
+      Name: !Sub '${AWS::StackName}-SGdevpriidstk'
