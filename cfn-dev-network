@@ -202,11 +202,11 @@ Parameters:
   EnvType:
     Description: ' This Block is for common tag work in value for all the resource'
     Type: String
-    Default: aap development env
+    Default: development env
   Tagname:
     Description: Customer Name for reference tags
     Type: String
-    Default: aap development env
+    Default:  development env
 Outputs:
   VPCIDdev:
     Value: !Ref VPCdev
