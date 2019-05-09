@@ -1,0 +1,144 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  VPCman:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL: 'https://s3.amazonaws.com/"bucket location where you stored your management networking stack'
+      Parameters:
+        VPCCIDRman: !Ref VPCCIDRman
+        PublicSubnetCIDRman: !Ref PublicSubnetCIDRman
+        PrivateSubnetCIDRman1: !Ref PrivateSubnetCIDRman1
+        PrivateSubnetCIDRman2: !Ref PrivateSubnetCIDRman2
+        AvailabilityZone1: !Ref AvailabilityZone1
+        AvailabilityZone2: !Ref AvailabilityZone2
+        EnvType: !Ref EnvType
+        Tagname: !Ref Tagname
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 04edd039-aee5-4686-8b4b-0c49a78e6025
+  EC2man:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL: 'https://s3.amazonaws.com/"bucket location where you stored your management resources stack'
+      Parameters:
+        KeyPairName: !Ref KeyPairName
+        subnetidpubman: !GetAtt 
+          - VPCman
+          - Outputs.PublicSubnetIDman
+        subnetidpriman1: !GetAtt 
+          - VPCman
+          - Outputs.PrivateSubnetIDman1
+        subnetidpriman2: !GetAtt 
+          - VPCman
+          - Outputs.PrivateSubnetIDman2
+        VPCidman: !GetAtt 
+          - VPCman
+          - Outputs.VPCIDman
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: c7f787de-7226-4ad9-9e28-4524c8cd7cea
+    DependsOn:
+      - VPCman
+Parameters:
+  VPCCIDRman:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.0.0.0/16
+  PublicSubnetCIDRman:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.0.0.0/24
+  PrivateSubnetCIDRman1:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.0.1.0/24
+  PrivateSubnetCIDRman2:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.0.2.0/24
+  AvailabilityZone1:
+    Type: 'AWS::EC2::AvailabilityZone::Name'
+    Description: Select AZ 1 for for subnet
+  AvailabilityZone2:
+    Type: 'AWS::EC2::AvailabilityZone::Name'
+    Description: Select AZ 2 for subnet
+  EnvType:
+    Description: ' This Block is for common tag work in value for all the resource'
+    Type: String
+    Default:  management env
+  Tagname:
+    Description: Customer Name for reference tags
+    Type: String
+    Default: aap management env
+  KeyPairName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: 'AWS::EC2::KeyPair::KeyName'
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+Outputs:
+  VPCIDmanstk:
+    Value: !GetAtt 
+          - VPCman
+          - Outputs.VPCIDman
+    Description: Perimeter VPC ID
+    Export:
+      Name: !Sub '${AWS::StackName}-VPCIDmanstk'
+  PrivateSubnetIDman1stk:
+    Description: Private Subnet ID in Perimeter VPC
+    Value: !GetAtt 
+          - VPCman
+          - Outputs.PrivateSubnetIDman1
+    Export:
+      Name: !Sub '${AWS::StackName}-PrivateSubnetIDman1stk'
+  PrivateSubnetIDman2stk:
+    Description: Private Subnet ID in Perimeter VPC
+    Value: !GetAtt 
+          - VPCman
+          - Outputs.PrivateSubnetIDman2
+    Export:
+      Name: !Sub '${AWS::StackName}-PrivateSubnetIDman2stk'
+  PublicSubnetIDmanstk:
+    Description: Public Subnet ID in Perimeter VPC
+    Value: !GetAtt 
+          - VPCman
+          - Outputs.PublicSubnetIDman
+    Export:
+      Name: !Sub '${AWS::StackName}-PublicSubnetIDmanstk'
+  RouteTableIDpubmanstk:
+    Description: Public Subnet ID in Perimeter VPC
+    Value: !GetAtt 
+          - VPCman
+          - Outputs.RouteTableIDpubman
+    Export:
+      Name: !Sub '${AWS::StackName}-RouteTableIDpubmanstk'
+  RouteTableIDpriman1stk:
+    Description: Public Subnet ID in Perimeter VPC
+    Value: !GetAtt 
+          - VPCman
+          - Outputs.RouteTableIDpriman1 
+    Export:
+      Name: !Sub '${AWS::StackName}-RouteTableIDpriman1stk'
+  RouteTableIDpriman2stk:
+    Description: Public Subnet ID in Perimeter VPC
+    Value: !GetAtt 
+          - VPCman
+          - Outputs.RouteTableIDpriman2
+    Export:
+      Name: !Sub '${AWS::StackName}-RouteTableIDpriman2stk'
+  SGmanpubidstk:
+    Description: SG of public instance in man resources
+    Value: !GetAtt 
+          - EC2man
+          - Outputs.SGmanpubid
+    Export:
+      Name: !Sub '${AWS::StackName}-SGmanpubidstk'
+  SGmanpriidstk:
+    Description: SG of public instance in man resources
+    Value: !GetAtt 
+          - EC2man
+          - Outputs.SGmanpriid
+    Export:
+      Name: !Sub '${AWS::StackName}-SGmanpriidstk'
