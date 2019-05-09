@@ -1,0 +1,283 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  Manstack:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL: 'https://s3.amazonaws.com/bucket location for management cfn-nested-mgmt'
+      Parameters:
+        VPCCIDRman: !Ref VPCCIDRman
+        PublicSubnetCIDRman: !Ref PublicSubnetCIDRman
+        PrivateSubnetCIDRman1: !Ref PrivateSubnetCIDRman1
+        PrivateSubnetCIDRman2: !Ref PrivateSubnetCIDRman2
+        AvailabilityZone1: !Ref AvailabilityZone1
+        AvailabilityZone2: !Ref AvailabilityZone2
+        EnvType: !Ref EnvType
+        Tagname: !Ref Tagname
+        KeyPairName: !Ref KeyPairName
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 3d395472-c589-4a50-a1a4-158aef22f91f
+  Prodstack:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL: 'https://s3.amazonaws.com/bucket location for production cfn-nested-prod'
+      Parameters:
+        VPCCIDRprod: !Ref VPCCIDRprod
+        PublicSubnetCIDRprod: !Ref PublicSubnetCIDRprod
+        PrivateSubnetCIDRprod1: !Ref PrivateSubnetCIDRprod1
+        PrivateSubnetCIDRprod2: !Ref PrivateSubnetCIDRprod2
+        AvailabilityZone1: !Ref AvailabilityZone1
+        AvailabilityZone2: !Ref AvailabilityZone2
+        EnvType: !Ref EnvType
+        Tagname: !Ref Tagname
+        KeyPairName: !Ref KeyPairName
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 6734602c-49ef-4103-804e-54fcf3a2083e
+    DependsOn:
+      - Devstack
+  Devstack:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL: 'https://s3.amazonaws.com/bucket location for development cfn-nested-dev'
+      Parameters:
+        VPCCIDRdev: !Ref VPCCIDRdev
+        PublicSubnetCIDRdev: !Ref PublicSubnetCIDRdev
+        PrivateSubnetCIDRdev: !Ref PrivateSubnetCIDRdev
+        DBSubnetCIDR: !Ref DBSubnetCIDR
+        AvailabilityZone1: !Ref AvailabilityZone1
+        AvailabilityZone2: !Ref AvailabilityZone2
+        AvailabilityZone3: !Ref AvailabilityZone3
+        EnvType: !Ref EnvType
+        Tagname: !Ref Tagname
+        KeyPairName: !Ref KeyPairName
+        DBName: !Ref DBName
+        DBUsername: !Ref DBUsername
+        DBPassword: !Ref DBPassword
+        DBClass: !Ref DBClass
+        DBAllocatedStorage: !Ref DBAllocatedStorage
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 6f443d94-954c-47c1-aafe-bb8a73aa8e24
+    DependsOn:
+      - Manstack
+  VPCpeering:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL: 'https://s3.amazonaws.com/bucket location for the vpc peering stack'
+      Parameters:
+        VPCidman: !GetAtt 
+          - Manstack
+          - Outputs.VPCIDmanstk
+        VPCiddev: !GetAtt 
+          - Devstack
+          - Outputs.VPCIDdevstk
+        VPCidprod: !GetAtt 
+          - Prodstack
+          - Outputs.VPCIDprodstk
+        RouteTableidpubman: !GetAtt 
+          - Manstack
+          - Outputs.RouteTableIDpubmanstk
+        RouteTableidpriman1: !GetAtt 
+          - Manstack
+          - Outputs.RouteTableIDpriman1stk
+        RouteTableidpriman2: !GetAtt 
+          - Manstack
+          - Outputs.RouteTableIDpriman2stk
+        RouteTableidpubdev: !GetAtt 
+          - Devstack
+          - Outputs.RouteTableIDpubdevstk
+        RouteTableidpridev: !GetAtt 
+          - Devstack
+          - Outputs.RouteTableIDpridevstk
+        RouteTableidpubprod: !GetAtt 
+          - Prodstack
+          - Outputs.RouteTableIDpubprodstk
+        RouteTableidpriprod1: !GetAtt 
+          - Prodstack
+          - Outputs.RouteTableIDpriprod1stk
+        RouteTableidpriprod2: !GetAtt 
+          - Prodstack
+          - Outputs.RouteTableIDpriprod2stk
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 473355d1-d871-4185-9713-897504213b3d
+    DependsOn:
+      - Prodstack
+Parameters:
+  VPCCIDRman:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.0.0.0/16
+  PublicSubnetCIDRman:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.0.0.0/24
+  PrivateSubnetCIDRman1:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.0.1.0/24
+  PrivateSubnetCIDRman2:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.0.2.0/24
+  AvailabilityZone1:
+    Type: 'AWS::EC2::AvailabilityZone::Name'
+    Description: Select AZ 1 for for subnet
+  AvailabilityZone2:
+    Type: 'AWS::EC2::AvailabilityZone::Name'
+    Description: Select AZ 2 for subnet
+  EnvType:
+    Description: ' This Block is for common tag work in value for all the resource'
+    Type: String
+    Default:  manangement env
+  Tagname:
+    Description: Customer Name for reference tags
+    Type: String
+    Default:  management env
+  KeyPairName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: 'AWS::EC2::KeyPair::KeyName'
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+  VPCCIDRprod:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.2.0.0/16
+  PublicSubnetCIDRprod:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.2.0.0/24
+  PrivateSubnetCIDRprod1:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.2.1.0/24
+  PrivateSubnetCIDRprod2:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.2.2.0/24
+  VPCCIDRdev:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.1.0.0/16
+  PublicSubnetCIDRdev:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.1.0.0/24
+  PrivateSubnetCIDRdev:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.1.1.0/24
+  DBSubnetCIDR:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    Description: ' This Block is for VPC CIDR (X.X.X.X/X)'
+    Type: String
+    Default: 10.1.2.0/24
+  AvailabilityZone3:
+    Type: 'AWS::EC2::AvailabilityZone::Name'
+    Description: Select AZ 3 for subnet
+  DBName:
+    Default: MyDatabase
+    Description: The database name
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+  DBUsername:
+    Default: admin
+    NoEcho: 'true'
+    Description: The database admin account username
+    Type: String
+    MinLength: '1'
+    MaxLength: '16'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+  DBPassword:
+    Default: admin
+    NoEcho: 'true'
+    Description: The database admin account password
+    Type: String
+    MinLength: '1'
+    MaxLength: '41'
+    AllowedPattern: '[a-zA-Z0-9]*'
+    ConstraintDescription: must contain only alphanumeric characters.
+  DBClass:
+    Default: db.m1.small
+    Description: Database instance class
+    Type: String
+    AllowedValues:
+      - db.m1.small
+      - db.m1.large
+      - db.m1.xlarge
+      - db.m2.xlarge
+      - db.m2.2xlarge
+      - db.m2.4xlarge
+    ConstraintDescription: must select a valid database instance type.
+  DBAllocatedStorage:
+    Default: '5'
+    Description: The size of the database (Gb)
+    Type: Number
+    MinValue: '5'
+    MaxValue: '1024'
+    ConstraintDescription: must be between 5 and 1024Gb.
+Metadata:
+  'AWS::CloudFormation::Designer':
+    3d395472-c589-4a50-a1a4-158aef22f91f:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 330
+        'y': 60
+      z: 1
+      embeds: []
+    6f443d94-954c-47c1-aafe-bb8a73aa8e24:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 330
+        'y': 210
+      z: 1
+      embeds: []
+      dependson:
+        - 3d395472-c589-4a50-a1a4-158aef22f91f
+    6734602c-49ef-4103-804e-54fcf3a2083e:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 330
+        'y': 370
+      z: 1
+      embeds: []
+      dependson:
+        - 6f443d94-954c-47c1-aafe-bb8a73aa8e24
+    473355d1-d871-4185-9713-897504213b3d:
+      size:
+        width: 60
+        height: 60
+      position:
+        x: 50
+        'y': 190
+      z: 1
+      embeds: []
+      dependson:
+        - 6734602c-49ef-4103-804e-54fcf3a2083e
+    019d8cd2-04a3-42fa-8bb4-6354ecd9b09c:
+      source:
+        id: 473355d1-d871-4185-9713-897504213b3d
+      target:
+        id: 6734602c-49ef-4103-804e-54fcf3a2083e
+      z: 11
